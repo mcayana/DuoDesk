@@ -35,7 +35,7 @@ try {
   if (-not (Test-Path (Join-Path $cfg 'vdd_settings.xml'))) { Copy-Item (Join-Path $pkg 'vdd_settings.xml') $cfg }
   & icacls.exe $cfg /grant "*${UserSid}:(OI)(CI)M" | Out-Null
 
-  $find = { Get-PnpDevice -Class Display -ErrorAction SilentlyContinue | Where-Object { $_.HardwareID -contains $HwId } }
+  $find = { Get-PnpDevice -Class Display -ErrorAction SilentlyContinue | Where-Object { ($_.HardwareID -contains 'Root\DuoDeskVDD') -or ($_.HardwareID -contains $HwId) } }
   if (-not (& $find)) {
     # Stage the driver package first via pnputil to surface exact Code Integrity / signature errors
     # (on Windows on ARM64, UpdateDriverForPlugAndPlayDevices often masks 0x800B0109 as 0x00000109).
@@ -70,7 +70,7 @@ try {
   try { $folder = $root.GetFolder('MacShare') } catch { $folder = $root.CreateFolder('MacShare') }
   $sddl = "D:(A;;FA;;;BA)(A;;FA;;;SY)(A;;GRGX;;;$UserSid)"
   foreach ($t in @(@('Extend on', 'Enable'), @('Extend off', 'Disable'))) {
-    $cmd = "Get-PnpDevice -Class Display | Where-Object { `$_.HardwareID -contains '$HwId' } | $($t[1])-PnpDevice -Confirm:`$false"
+    $cmd = "Get-PnpDevice -Class Display | Where-Object { (`$_.HardwareID -contains 'Root\DuoDeskVDD') -or (`$_.HardwareID -contains '$HwId') } | $($t[1])-PnpDevice -Confirm:`$false"
     $def = $svc.NewTask(0)
     $def.RegistrationInfo.Description = 'MacShare: switch the virtual PC monitor (Display > PC to Mac > Extend)'
     $def.Settings.ExecutionTimeLimit = 'PT2M'

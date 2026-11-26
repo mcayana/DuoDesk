@@ -19,8 +19,9 @@ const DRIVERS = {
   arm64: { url: RELEASE + 'VirtualDisplayDriver-ARM64.Driver.Only.zip', sha256: 'DCD487161469C726BAB60F174A7E7F70EE02AFD437CAD0D5C0E6755953DE5A25' },
 };
 const SETTINGS_XML = 'C:\\VirtualDisplayDriver\\vdd_settings.xml';
-const ADAPTER = /virtual display driver/i; // the device name in MttVDD.inf
-const MONITOR_ID = 'MTT1337'; // its monitor's EDID id (MONITOR\MTT1337\…)
+const ADAPTER = /(duodesk virtual display|virtual display driver)/i; // DuoDeskVdd.inf or MttVDD.inf
+const MONITOR_ID = 'MTT1337'; // fallback EDID id (MONITOR\MTT1337\…)
+const DUODESK_MONITOR_ID = 'DUO1337'; // DuoDeskVdd EDID id (MONITOR\DUO1337\…)
 const SCHTASKS = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'schtasks.exe');
 
 // scripts/vdd-status.ps1: the driver's device and status, and our Extend tasks.
@@ -120,7 +121,10 @@ class Vdd {
       }
       // Not on the desktop yet: Windows may show it as a Duplicate of another monitor (it
       // remembers that per set of monitors). The helper extends only then.
-      if (on) await this.helper.request('displayExtend', { monitor: MONITOR_ID }).catch(() => {});
+      if (on) {
+        await this.helper.request('displayExtend', { monitor: DUODESK_MONITOR_ID }).catch(() => {});
+        await this.helper.request('displayExtend', { monitor: MONITOR_ID }).catch(() => {});
+      }
       if (Date.now() > until) {
         this._set({ message: on ? 'The virtual monitor didn’t appear' : 'The virtual monitor didn’t go away' });
         return false;

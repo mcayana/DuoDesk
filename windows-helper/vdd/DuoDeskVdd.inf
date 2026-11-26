@@ -1,0 +1,72 @@
+; DuoDesk Virtual Display Driver (IddCx UMDF 2.x — ARM64 & x64)
+; Copyright (C) 2026 DuoDesk Contributors. GPL-3.0, see LICENSE.
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = Display
+ClassGuid   = {4d36e968-e325-11ce-bfc1-08002be10318}
+Provider    = %ManufacturerName%
+CatalogFile = DuoDeskVdd.cat
+DriverVer   = 11/27/2026,2.5.0.0
+PnpLockdown = 1
+
+[Manufacturer]
+%ManufacturerName% = Standard,NTamd64.10.0...18362,NTarm64.10.0...18362
+
+[Standard.NTamd64.10.0...18362]
+%DeviceName% = DuoDeskVdd_Install, Root\DuoDeskVDD
+
+[Standard.NTarm64.10.0...18362]
+%DeviceName% = DuoDeskVdd_Install, Root\DuoDeskVDD
+
+[DuoDeskVdd_Install.NT]
+CopyFiles = UMDriverCopy
+FeatureScore = F9
+
+[DuoDeskVdd_Install.NT.hw]
+AddReg = DuoDeskVdd_Hardware_AddReg
+
+[DuoDeskVdd_Hardware_AddReg]
+HKR, "WUDF", DeviceGroup, 0x00000000, "IddCx"
+HKR, "WUDF", UpperDriverOk, 0x00010001, 1
+
+[DuoDeskVdd_Install.NT.Services]
+AddService = WUDFRd,0x000001fa,WUDFRD_ServiceInstall
+
+[WUDFRD_ServiceInstall]
+DisplayName   = %WudfRdDisplayName%
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %12%\WUDFRd.sys
+
+[DuoDeskVdd_Install.NT.Wdf]
+UmdfService              = DuoDeskVdd,DuoDeskVdd_Service_Install
+UmdfServiceOrder         = DuoDeskVdd
+UmdfKernelModeClientPolicy = AllowKernelModeClients
+UmdfFileObjectPolicy     = AllowNullAndUnknownFileObjects
+UmdfHostProcessSharing   = ProcessSharingDisabled
+UmdfDispatcher           = FileHandle
+
+[DuoDeskVdd_Service_Install]
+UmdfLibraryVersion = 2.15.0
+ServiceBinary      = %12%\UMDF\DuoDeskVdd.dll
+UmdfExtensions     = IddCx0104
+
+[DestinationDirs]
+UMDriverCopy = 12,UMDF
+
+[UMDriverCopy]
+DuoDeskVdd.dll
+
+[SourceDisksNames]
+1 = %DiskName%
+
+[SourceDisksFiles]
+DuoDeskVdd.dll = 1
+
+[Strings]
+ManufacturerName  = "DuoDesk"
+DiskName          = "DuoDesk Virtual Display Driver Installation Disk"
+DeviceName        = "DuoDesk Virtual Display Adapter"
+WudfRdDisplayName = "Windows Driver Foundation - User-mode Driver Framework Reflector"

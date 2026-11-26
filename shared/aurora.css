@@ -56,8 +56,8 @@
   --au-violet: #8a5cff; --au-violet-text: #a98bff; --au-pink: #ff3d9a; --au-cyan: #2fd6ff; --au-mint: #3dffa8; --au-amber: #ffb340; --au-red: #ff5c7a;
   --spec: linear-gradient(90deg, #ff3d9a, #8a5cff 30%, #2fd6ff 55%, #3dffa8 75%, #ffb340);
   --au-ring: 0 0 0 2px rgba(169, 139, 255, 0.9), 0 0 16px rgba(138, 92, 255, 0.45);
-  --ui: "Geist", system-ui, "Segoe UI", -apple-system, sans-serif;
-  --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  --ui: "Geist", "Yu Gothic UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Meiryo", system-ui, "Segoe UI", -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, Menlo, "BIZ UDGothic", monospace;
   --ease: cubic-bezier(0.2, 0.9, 0.1, 1);
 }
 /* --faint is still text in places (inactive section states, placeholders): #7f7f88 keeps it at

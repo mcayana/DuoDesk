@@ -20,6 +20,9 @@ const electronVersion = require(path.join(LIN, 'node_modules', 'electron', 'pack
 
 const SKIP = new Set(['node_modules', 'dist', 'installer', 'test', 'package-lock.json']); // tests (mesh/test) stay out of the package
 const SHARED_DIRS = ['fonts', 'art', 'pagefx']; // shared/ subfolders the pages load at run time
+const DEFAULT_ARCH = process.arch === 'arm64' ? 'arm64' : 'x64';
+const ARCHS = process.argv.slice(2).length ? process.argv.slice(2) : [DEFAULT_ARCH];
+for (const a of ARCHS) if (a !== 'x64' && a !== 'arm64') throw new Error('Unknown architecture ' + a + ' (x64 or arm64)');
 
 function copy(from, to, filter = () => true) {
   const st = fs.statSync(from);
@@ -98,9 +101,10 @@ async function main() {
     homepage: 'https://github.com/0xCodez/DuoDesk', main: 'linux/main.js', dependencies: pkg.dependencies,
   }, null, 2));
 
-  console.log('Packaging…');
-  await builder.build({
-    targets: builder.Platform.LINUX.createTarget(['AppImage', 'deb'], builder.Arch.x64),
+  for (const arch of ARCHS) {
+    console.log('Packaging ' + arch + '…');
+    await builder.build({
+      targets: builder.Platform.LINUX.createTarget(['AppImage', 'deb'], builder.Arch[arch]),
     projectDir: LIN,
     publish: 'never', // the workflow uploads to the release itself; on a tag push electron-builder would otherwise try to publish and need GH_TOKEN
     config: {
@@ -133,7 +137,8 @@ async function main() {
         fpm: systemFiles,
       },
     },
-  });
+    });
+  }
   console.log('Done: ' + path.join(LIN, 'dist'));
 }
 

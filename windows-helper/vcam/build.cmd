@@ -9,7 +9,8 @@ setlocal
 set VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 if not exist "%VSWHERE%" goto none
 set VS=
-for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VS=%%i
+for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath`) do set VS=%%i
+if not defined VS for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VS=%%i
 if not defined VS goto none
 set SRC=%~dp0
 set BIN=%~dp0..\bin
@@ -18,10 +19,16 @@ if not exist "%BIN%" mkdir "%BIN%"
 set CFLAGS=/nologo /O2 /EHsc /MT /W3 /std:c++17 /DUNICODE /D_UNICODE
 set LIBS=mfplat.lib mf.lib mfuuid.lib mfreadwrite.lib mfsensorgroup.lib ole32.lib advapi32.lib strmiids.lib
 
-call :arch x64 x64 || exit /b 1
-rem The ARM64 cross tools are optional.
-if exist "%VS%\VC\Tools\MSVC" for /d %%d in ("%VS%\VC\Tools\MSVC\*") do if exist "%%d\bin\Hostx64\arm64\cl.exe" set ARM=1
-if defined ARM (call :arch x64_arm64 arm64 || exit /b 1) else echo note: no ARM64 C++ tools: no twindesk-vcam-arm64.dll
+if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" (
+  call :arch arm64 arm64 || exit /b 1
+  if exist "%VS%\VC\Tools\MSVC" for /d %%d in ("%VS%\VC\Tools\MSVC\*") do if exist "%%d\bin\Hostarm64\x64\cl.exe" set HAS_X64=1
+  if defined HAS_X64 (call :arch arm64_x64 x64 || exit /b 1) else echo note: no x64 cross tools on ARM64 host: built native arm64 only
+) else (
+  call :arch x64 x64 || exit /b 1
+  rem The ARM64 cross tools are optional.
+  if exist "%VS%\VC\Tools\MSVC" for /d %%d in ("%VS%\VC\Tools\MSVC\*") do if exist "%%d\bin\Hostx64\arm64\cl.exe" set ARM=1
+  if defined ARM (call :arch x64_arm64 arm64 || exit /b 1) else echo note: no ARM64 C++ tools: no twindesk-vcam-arm64.dll
+)
 rmdir /s /q "%OBJ%" 2>nul
 exit /b 0
 
@@ -36,6 +43,8 @@ if exist "%BIN%\twindesk-vcam-%2.dll" ren "%BIN%\twindesk-vcam-%2.dll" twindesk-
 ren "%BIN%\twindesk-vcam-%2.new.dll" twindesk-vcam-%2.dll
 del /q "%BIN%\twindesk-vcam-%2.new.*" 2>nul
 if "%2"=="x64" (
+  cl %CFLAGS% /Fo"%OBJ%\%2\\" "%SRC%vcam.cpp" /link /OUT:"%BIN%\twindesk-vcam.exe" %LIBS% || exit /b 1
+) else if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" (
   cl %CFLAGS% /Fo"%OBJ%\%2\\" "%SRC%vcam.cpp" /link /OUT:"%BIN%\twindesk-vcam.exe" %LIBS% || exit /b 1
 )
 echo built twindesk-vcam-%2.dll

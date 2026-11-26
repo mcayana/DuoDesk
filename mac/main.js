@@ -49,6 +49,9 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 // (jitterBufferTarget). FlexFEC repairs lost packets without waiting a round trip for a resend; it
 // costs bandwidth only while packets are being lost.
 app.commandLine.appendSwitch('force-fieldtrials', 'WebRTC-ForceSendPlayoutDelay/min_ms:0,max_ms:0/WebRTC-FlexFEC-03/Enabled/WebRTC-FlexFEC-03-Advertised/Enabled/');
+const i18n = require('../shared/i18n.js');
+const hwaccel = require('../shared/hwaccel.js');
+hwaccel.applyElectronSwitches(app, 'auto');
 // Renamed (to TwinDesk, now DuoDesk): settings, pairing and the identity stay in the old folder.
 app.setPath('userData', process.env.MACSHARE_PROFILE || path.join(app.getPath('appData'), 'MacShare')); // PROFILE: a second dev copy
 require('../shared/applog.js').start(app); // console.* and crashes into the log folder, both apps
@@ -507,8 +510,9 @@ app.whenReady().then(() => {
   if (app.dock && !app.isPackaged) app.dock.setIcon(path.join(__dirname, '..', 'shared', 'icon', 'teindesk-dark-mac.png'));
   store.init(app.getPath('userData'));
   settings = store.loadSettings();
+  i18n.initFromSettings(settings);
   id = identity.load(settings);
-  Object.assign(state, { macName: id.macName, macId: id.macId, fp: id.fp, version: app.getVersion(), about: aboutInfo(app) });
+  Object.assign(state, { macName: id.macName, macId: id.macId, fp: id.fp, version: app.getVersion(), about: aboutInfo(app), hwaccel: hwaccel.getSummary(settings.app && settings.app.accel) });
   console.log(`[main] ${id.macName} (${id.macId}) fp ${id.fp}`);
 
   server = new Server(id);

@@ -89,6 +89,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        I18n.init(this)
         enableEdgeToEdge(SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)) // always dark: light icons
         TwinService.start(this)
         setContent { Theme { App(Core.get(this), resumed.value) } }
@@ -1437,13 +1438,33 @@ private fun GeneralPage(core: Core, v: Int) {
     PageHead("General", "")
     MacCard("This device") {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Name", color = pal.text, fontSize = 15.sp)
-            Text("What your computers call it", color = pal.muted, fontSize = 12.5.sp)
+            Text(I18n.t("Name"), color = pal.text, fontSize = 15.sp)
+            Text(I18n.t("What your computers call it"), color = pal.muted, fontSize = 12.5.sp)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(dev, { dev = it }, singleLine = true, modifier = Modifier.weight(1f),
                     textStyle = LocalTextStyle.current.copy(fontSize = 15.sp, color = pal.text), shape = RoundedCornerShape(14.dp))
                 Secondary("Save") { core.store.setDeviceName(dev); core.changed() }
             }
+        }
+    }
+    MacCard("Language") {
+        val langs = listOf("auto" to "Follow system", "ja" to "日本語", "en" to "English")
+        MacRow("Display language", "Follow system language or choose manually", first = true) {
+            SingleChoiceSegmentedButtonRow {
+                langs.forEachIndexed { i, (code, label) ->
+                    SegmentedButton(
+                        selected = I18n.pref == code,
+                        onClick = { I18n.setLang(ctx, code); core.changed() },
+                        shape = SegmentedButtonDefaults.itemShape(i, langs.size),
+                    ) { Text(I18n.t(label), fontSize = 12.sp, maxLines = 1) }
+                }
+            }
+        }
+    }
+    val hw = remember { HwAccel.inspect() }
+    MacCard("Hardware acceleration") {
+        MacRow("Detected hardware", hw.detail(), first = true) {
+            Pill(hw.badge(), if (hw.isArm64 || hw.hwDecoders.isNotEmpty()) "good" else "muted")
         }
     }
     val pm = ctx.getSystemService(PowerManager::class.java)

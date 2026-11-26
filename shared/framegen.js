@@ -97,16 +97,35 @@
   void main() { o = vec4(texture(cur, uv).rgb, 1.0); }`;
 
   class FrameGen {
-    constructor(video, canvas) {
+    constructor(video, canvas, opts = {}) {
       this.video = video;
       this.canvas = canvas;
+      this.opts = opts || {};
       this.on = false;
       this.active = false;
       this.gl = null;
+      this.staticFrames = 0;
+      this.lastMotionScore = 1;
+      this.estimator = (this.opts.adaptiveNpu !== false && root.DuoDeskAccel && root.DuoDeskAccel.MotionActivityEstimator)
+        ? new root.DuoDeskAccel.MotionActivityEstimator(64, 36) : null;
+      if (this.estimator) {
+        const pref = this.opts.accelMode === 'gpu' ? 'gpu' : 'npu';
+        this.estimator.initNpu(pref).catch(() => {});
+      }
+    }
+
+    getBackendInfo() {
+      return {
+        gpu: this.gl ? 'webgl2' : 'none',
+        powerPreference: this.opts.accelMode === 'power-save' ? 'low-power' : 'high-performance',
+        npuEstimator: this.estimator ? this.estimator.backend : 'disabled',
+        staticSleep: this.staticFrames >= 3,
+      };
     }
 
     _init() {
-      const gl = this.canvas.getContext('webgl2', { alpha: false, antialias: false, desynchronized: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+      const powerPreference = this.opts.accelMode === 'power-save' ? 'low-power' : 'high-performance';
+      const gl = this.canvas.getContext('webgl2', { alpha: false, antialias: false, desynchronized: true, preserveDrawingBuffer: false, powerPreference });
       if (!gl) throw new Error('WebGL2 is not available');
       this.gl = gl;
       const prog = (fs) => {
@@ -234,9 +253,18 @@
       gl.uniform2f(gl.getUniformLocation(this.p.luma, 'texel'), 1 / w, 1 / h);
       this._draw(this.p.luma, this.luma[1], lw, lh);
       this.count++;
+      if (this.estimator && !this._estimating) {
+        this._estimating = true;
+        this.estimator.estimateAsync(v).then((score) => {
+          this.lastMotionScore = score;
+          this.staticFrames = score < 0.0025 ? Math.min(30, this.staticFrames + 1) : 0;
+        }).catch(() => {}).finally(() => { this._estimating = false; });
+      }
       if (this.count >= 2) {
         const dt = this.times[1] - this.times[0];
         if (dt > 0 && dt < 200) this.frameMs += (dt - this.frameMs) * 0.1;
+        // Adaptive NPU/GPU power saving: skip heavy block-matching shader when frame is static
+        if (this.staticFrames >= 3) return;
         const bw = Math.ceil(lw / B), bh = Math.ceil(lh / B);
         this._size(this.mv, bw, bh);
         gl.useProgram(this.p.motion);

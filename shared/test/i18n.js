@@ -30,6 +30,9 @@ assert.strictEqual(i18n.t('Update available: v2.6.0'), 'アップデートがあ
 // Variable interpolation
 assert.strictEqual(i18n.t('Let the other computer wake {me}', { me: 'Surface' }), '相手のパソコンから Surface をスリープ解除（Wake-on-LAN）');
 
+// ARM64 VDD signature error message localization
+assert.ok(i18n.t('Extend isn’t available on Windows on ARM yet: Windows there accepts only Microsoft-signed display drivers, and the virtual display driver’s ARM64 build isn’t one (Virtual-Display-Driver#465). Mirror mode still works without it.').includes('Microsoft 署名済みドライバー'));
+
 // Tray menu localization in Japanese
 const noop = () => {};
 const jaMenu = trayMenu.template({

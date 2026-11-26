@@ -72,8 +72,9 @@ class Vdd {
     } catch (e) {
       if (/cancel/i.test(e.message)) this.state.message = 'The administrator prompt was declined';
       // Windows on ARM takes only Microsoft-signed drivers; the ARM64 build is signed by SignPath
-      // only (VirtualDrivers/Virtual-Display-Driver#465). Install works again once a signed one is pinned.
-      else if (cpu === '12' && /800B0109/.test(e.message)) this.state.message = 'Extend isn’t available on Windows on ARM yet: Windows there accepts only Microsoft-signed display drivers, and the virtual display driver’s ARM64 build isn’t one (Virtual-Display-Driver#465)';
+      // only (VirtualDrivers/Virtual-Display-Driver#465). UpdateDriverForPlugAndPlayDevices may
+      // report 0x800B0109 (CERT_E_UNTRUSTEDROOT) or mask it as 0x00000109.
+      else if (cpu === '12' && /(800B0109|00000109)/i.test(e.message)) this.state.message = 'Extend isn’t available on Windows on ARM yet: Windows there accepts only Microsoft-signed display drivers, and the virtual display driver’s ARM64 build isn’t one (Virtual-Display-Driver#465). Mirror mode still works without it.';
       else this.state.message = 'Installing the display driver failed: ' + e.message;
     } finally {
       try { fs.unlinkSync(log); } catch (_) { /* none */ }

@@ -305,6 +305,9 @@
     'Shows up once a computer is paired': 'パソコンとペアリングすると表示されます',
     'Adds the extra screen for Share screen › Extend': '「画面を共有 › 拡張」用の仮想モニターを追加します',
     'Needed for Share screen › Extend. Asks for administrator rights once': '「画面を共有 › 拡張」に必要です（初回のみ管理者権限を求めます）',
+    'The administrator prompt was declined': '管理者権限のプロンプトがキャンセルされました',
+    'Extend isn’t available on Windows on ARM yet: Windows there accepts only Microsoft-signed display drivers, and the virtual display driver’s ARM64 build isn’t one (Virtual-Display-Driver#465). Mirror mode still works without it.': 'Windows on ARM では現在「拡張（Extend）」用の仮想ディスプレイドライバーを利用できません。Windows on ARM は Microsoft 署名済みドライバーを必須とするため、SignPath 署名の ARM64 版ドライバー（Virtual-Display-Driver#465）が拒否されます。※「ミラーリング」やアプリ共有はこのドライバーなしでそのまま利用できます。',
+    'Extend isn’t available on Windows on ARM yet: Windows there accepts only Microsoft-signed display drivers, and the virtual display driver’s ARM64 build isn’t one (Virtual-Display-Driver#465)': 'Windows on ARM では現在「拡張（Extend）」用の仮想ディスプレイドライバーを利用できません。Windows on ARM は Microsoft 署名済みドライバーを必須とするため、SignPath 署名の ARM64 版ドライバー（Virtual-Display-Driver#465）が拒否されます。',
     'No network adapter here can wake {me}': '{me} をスリープ解除できるネットワークアダプターがありません',
     'Its network adapter wakes {me} on a magic packet. Asks for administrator rights to change it': 'マジックパケットで {me} を起動します（変更には管理者権限が必要）',
 

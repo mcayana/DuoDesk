@@ -1,4 +1,4 @@
-# TwinDesk — Copyright (C) 2026 inukaasith. GPL-3.0, see LICENSE.
+﻿# TwinDesk — Copyright (C) 2026 inukaasith. GPL-3.0, see LICENSE.
 # Run elevated once (vdd.js): installs the Virtual Display Driver
 # (https://github.com/VirtualDrivers/Virtual-Display-Driver, MIT, signed by SignPath Foundation)
 # for Display › PC → Mac › Extend, leaves its monitor switched off, and adds two scheduled tasks
@@ -37,12 +37,24 @@ try {
 
   $find = { Get-PnpDevice -Class Display -ErrorAction SilentlyContinue | Where-Object { $_.HardwareID -contains $HwId } }
   if (-not (& $find)) {
+    # Stage the driver package first via pnputil to surface exact Code Integrity / signature errors
+    # (on Windows on ARM64, UpdateDriverForPlugAndPlayDevices often masks 0x800B0109 as 0x00000109).
+    $pnp = Join-Path $env:SystemRoot 'System32\pnputil.exe'
+    $pnpOut = (& $pnp /add-driver $inf 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+      $pnpHex = '{0:X8}' -f ($LASTEXITCODE -band 0xFFFFFFFFL)
+      if ($pnpOut -match '800B0109|00000109|untrusted|signature|signed|Code Integrity' -or $pnpHex -eq '800B0109' -or $pnpHex -eq '00000109') {
+        throw 'Windows refused the driver''s signature (0x800B0109)'
+      }
+      throw ('the display driver package could not be staged (error 0x' + $pnpHex + ', see C:\Windows\INF\setupapi.dev.log)')
+    }
     $p = Start-Process -FilePath $Helper -ArgumentList '--add-root-device', ('"' + $inf + '"'), $HwId -Wait -PassThru -WindowStyle Hidden
     if ($p.ExitCode -ne 0) {
-      # The helper exits with Windows' error. 0x800B0109 (CERT_E_UNTRUSTEDROOT): Code Integrity
-      # refused the package's signature, as Windows on ARM does for drivers that aren't Microsoft-signed.
-      $code = '{0:X8}' -f $p.ExitCode
-      if ($code -eq '800B0109') { throw 'Windows refused the driver''s signature (0x800B0109)' }
+      # The helper exits with Windows' error. 0x800B0109 (CERT_E_UNTRUSTEDROOT) or its truncated
+      # UpdateDriverForPlugAndPlayDevices code 0x00000109: Code Integrity refused the package's
+      # signature, as Windows on ARM does for drivers that aren't Microsoft-signed.
+      $code = '{0:X8}' -f ($p.ExitCode -band 0xFFFFFFFFL)
+      if ($code -eq '800B0109' -or $code -eq '00000109') { throw 'Windows refused the driver''s signature (0x800B0109)' }
       throw ('the display driver did not install (error 0x' + $code + ', see C:\Windows\INF\setupapi.dev.log)')
     }
     Set-Content -Path (Join-Path $dir 'installed-by-macshare') -Value (Get-Date -Format o)

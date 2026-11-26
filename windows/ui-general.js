@@ -51,6 +51,42 @@ UI.tab({
     const deviceName = el('span', { class: 'value' });
     const deviceRow = UI.row('Computer name', 'How other computers see this one', [deviceName]);
 
+    // Language (shared/i18n.js)
+    const langSel = UI.select([
+      { value: 'auto', label: 'Follow system' },
+      { value: 'ja', label: '日本語' },
+      { value: 'en', label: 'English' },
+    ], (v) => {
+      if (window.DuoDeskI18n) window.DuoDeskI18n.setLang(v);
+      api.setApp({ lang: v });
+    });
+    const langRow = UI.row('Display language', 'Follow system language or choose manually', [langSel.el]);
+
+    // Hardware acceleration (ARM64 / GPU / NPU)
+    const accelSel = UI.select([
+      { value: 'auto', label: 'Auto (NPU & GPU)' },
+      { value: 'gpu', label: 'GPU priority' },
+      { value: 'power-save', label: 'ARM power saver' },
+      { value: 'off', label: 'Software only' },
+    ], (v) => api.setApp({ accel: v }));
+    const accelRow = UI.row('Acceleration mode', 'Use NPU and GPU for frame generation, video decoding and low-power motion analysis', [accelSel.el]);
+    const npuSw = UI.switch((v) => api.setApp({ adaptiveNpu: v }), { label: 'Adaptive NPU/GPU frame pacing' });
+    const npuRow = UI.row('Adaptive NPU/GPU frame pacing', 'Reduces GPU load automatically when the shared screen is static', [npuSw]);
+    const hwPill = el('span', { class: 'pill muted', text: 'Checking…' });
+    const hwRow = UI.row('Detected hardware', 'Architecture, GPU and NPU capabilities on this device', [hwPill]);
+    let hwProbed = null;
+    if (window.DuoDeskAccel && window.DuoDeskAccel.probeCapabilities) {
+      window.DuoDeskAccel.probeCapabilities().then((caps) => {
+        hwProbed = caps;
+        if (UI.state) {
+          const arch = (UI.state.hwaccel && UI.state.hwaccel.arch ? UI.state.hwaccel.arch.toUpperCase() : '');
+          const parts = [arch, caps.webnn.available ? 'NPU/WebNN:' + caps.webnn.device.toUpperCase() : '', caps.webgpu.available ? 'WebGPU' : caps.webgl2.available ? 'WebGL2' : 'CPU'].filter(Boolean);
+          hwPill.textContent = parts.join(' · ') || 'CPU';
+          hwPill.className = 'pill ' + (caps.webnn.available || caps.webgpu.available ? 'good' : 'muted');
+        }
+      }).catch(() => {});
+    }
+
     // Appearance: the phone's wallpaper behind it here (settings.phone.wallpaper, was on the Phone page).
     const wallSw = UI.switch((v) => api.setPhone({ wallpaper: v }), { label: 'Show the phone’s wallpaper' });
     const wallRow = UI.row('Show the phone’s wallpaper', 'On its tile and Overview. DuoDesk on the phone reads it once wireless debugging is set up', [wallSw]);
@@ -71,9 +107,11 @@ UI.tab({
       ]),
       UI.card('Appearance', [
         UI.row('Show a popup when switching', 'When the mouse and keyboard move between devices', [hudSw]),
+        langRow,
         wallRow,
         media.el,
       ]),
+      UI.card('Hardware acceleration', [accelRow, npuRow, hwRow]),
       UI.card('Overview', partRows),
       UI.card('Network and Bluetooth', [bleRow, blePcRow, bleWifiRow, wakeRow, sendToRow]),
       UI.card('Permissions', [fwRow, btRow, locRow]),
@@ -87,6 +125,21 @@ UI.tab({
       for (const k of Object.keys(partSw)) partSw[k].set(ov[k] !== false);
       startup.set(s.startup);
       hudSw.set(s.app.hud);
+      if (s.app.lang) {
+        langSel.set(s.app.lang);
+        if (window.DuoDeskI18n && window.DuoDeskI18n.getLang() !== s.app.lang) window.DuoDeskI18n.setLang(s.app.lang);
+      }
+      if (s.app.accel) accelSel.set(s.app.accel);
+      npuSw.set(s.app.adaptiveNpu !== false);
+      if (s.hwaccel) {
+        const hw = s.hwaccel;
+        const runtime = hwProbed
+          ? [hw.arch.toUpperCase(), hwProbed.webnn.available ? 'WebNN:' + hwProbed.webnn.device.toUpperCase() : '', hwProbed.webgpu.available ? 'WebGPU' : hwProbed.webgl2.available ? 'WebGL2' : 'CPU'].filter(Boolean).join(' · ')
+          : [hw.arch.toUpperCase(), hw.npuLikely ? 'NPU' : '', 'GPU'].filter(Boolean).join(' · ');
+        hwPill.textContent = runtime;
+        hwPill.className = 'pill ' + (hw.mode === 'off' ? 'muted' : 'good');
+        hwRow.setHint([hw.cpuModel, hw.gpuBackend, hw.npuHint].filter(Boolean).join(' · '));
+      }
       const f = s.files || {};
       recvReset.hidden = !f.receivedFolder;
       recvRow.setHint((f.receivedFolder && f.received !== f.receivedFolder ? f.receivedFolder + ' isn’t there now: Downloads meanwhile. ' : (f.received || 'Downloads') + ' · ')

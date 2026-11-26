@@ -8,14 +8,17 @@ setlocal
 set VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 if not exist "%VSWHERE%" goto none
 set VS=
-for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VS=%%i
+for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath`) do set VS=%%i
+if not defined VS for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VS=%%i
 if not defined VS goto none
 set SRC=%~dp0
 set BIN=%~dp0..\bin
 set OBJ=%~dp0..\bin\pad-obj
 if not exist "%BIN%" mkdir "%BIN%"
 if not exist "%OBJ%" mkdir "%OBJ%"
-call "%VS%\VC\Auxiliary\Build\vcvarsall.bat" x64 >nul || exit /b 1
+set VCVARS_ARCH=x64
+if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" set VCVARS_ARCH=arm64
+call "%VS%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% >nul || exit /b 1
 rem A running .exe can be renamed but not overwritten: the new one is built beside it and swapped in.
 cl /nologo /O2 /EHsc /MT /W3 /std:c++17 /DUNICODE /D_UNICODE /I"%SRC%vigem\include" /Fo"%OBJ%\\" ^
   "%SRC%pad.cpp" "%SRC%vigem\src\ViGEmClient.cpp" /link /OUT:"%BIN%\twindesk-pad.new.exe" setupapi.lib || exit /b 1

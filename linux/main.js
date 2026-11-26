@@ -18,6 +18,8 @@ const P = require('../shared/protocol.js');
 const { receivedDir } = require('../shared/received.js'); // General › Received files
 const CL = require('../shared/cursorlock.js');
 const trayMenu = require('../shared/traymenu.js');
+const i18n = require('../shared/i18n.js');
+const hwaccel = require('../shared/hwaccel.js');
 const store = require('./store');
 const { Discovery, interfaces, isIPv4, ipToInt } = require('./discovery');
 const Link = require('./link');
@@ -75,6 +77,7 @@ app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
 app.commandLine.appendSwitch('force-fieldtrials', 'WebRTC-ForceSendPlayoutDelay/min_ms:0,max_ms:0/WebRTC-FlexFEC-03/Enabled/WebRTC-FlexFEC-03-Advertised/Enabled/');
 // Wayland (L6): screen capture through the desktop portal and PipeWire.
 app.commandLine.appendSwitch('enable-features', 'WebRTCPipeWireCapturer');
+hwaccel.applyElectronSwitches(app, 'auto');
 // Renamed MacShare → TwinDesk: settings, pairing and keys stay in the folder they've always been
 // in (Electron would follow the new product name). A dev copy's --user-data-dir still wins.
 if (!app.commandLine.hasSwitch('user-data-dir')) app.setPath('userData', path.join(app.getPath('appData'), 'MacShare'));
@@ -170,6 +173,7 @@ function start() {
   theme.start();
   device = loadDevice();
   settings = normalize(store.read('settings.json', {}));
+  i18n.initFromSettings(settings);
 
   discovery = new Discovery(device);
   discovery.on('change', pushState);
@@ -341,7 +345,7 @@ function start() {
     get rezume() { return rezume; }, loadReZume,
     get phone() { return phone; }, get phoneViews() { return phoneViews; }, get camShare() { return camShare; }, get vcam() { return vcam; }, get phoneRemote() { return phoneRemote; }, get nowPlaying() { return nowPlaying; }, get btAudio() { return btAudio; }, get phoneDrive() { return phoneDrive; }, get terminal() { return terminal; }, loadRemote, setCamera, loadNowPlaying, loadBtAudio, loadTerminal, connectPhoneDev, cancelPhoneInvite, hub: loadHub,
     get net() { return net; }, get wifi() { return wifi; }, applyNet, joinHotspot, openBluetoothSettings,
-    checkFirewall, fixFirewall, fixInput, setStartup, onApp: () => updateTray(buildState()) });
+    checkFirewall, fixFirewall, fixInput, setStartup, onApp: () => { i18n.initFromSettings(settings); updateTray(buildState()); } });
   pairSync = new PairSync({ link, settings, save: saveSettings, set: ipc.set }); // Two-way switches per pair
   nativeTheme.on('updated', pushState);
   loadReZume(); // only while it's on
@@ -1045,6 +1049,7 @@ function buildState() {
     rezume: rezume ? rezume.view : { ...settings.rezume, connected: false }, // ReZume tab (shared/rezume.js)
     ui: settings.ui,
     app: settings.app,
+    hwaccel: hwaccel.getSummary(settings.app && settings.app.accel),
     version: app.getVersion(),
     about: about || (about = aboutInfo(app)), // About page: this app and this computer
     updates: updates ? updates.view : null,

@@ -26,7 +26,15 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
 
     steps:
       # Dispatch: main unless another branch is asked for (ref), whichever branch the run was started
@@ -60,14 +68,14 @@ jobs:
         working-directory: linux
         run: npm install
 
-      - name: Build Linux packages
+      - name: Build Linux packages (${{ matrix.arch }})
         working-directory: linux
-        run: npm run dist
+        run: npm run dist -- ${{ matrix.arch }}
 
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
-          name: duodesk-linux-x64
+          name: duodesk-linux-${{ matrix.arch }}
           path: linux/dist/DuoDesk-*
 
       # Straight onto the release, no download and re-upload.

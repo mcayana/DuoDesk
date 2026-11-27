@@ -11,6 +11,7 @@ const P = require('../shared/protocol.js');
 const { receivedDir } = require('../shared/received.js'); // General › Received files
 const CL = require('../shared/cursorlock.js');
 const trayMenu = require('../shared/traymenu.js');
+const i18n = require('../shared/i18n.js');
 const store = require('./store');
 const { Discovery, interfaces, isIPv4, ipToInt } = require('./discovery');
 const Link = require('./link');
@@ -192,6 +193,7 @@ function loadDevice() {
 function start() {
   device = loadDevice();
   settings = normalize(store.read('settings.json', {}));
+  i18n.initFromSettings(settings);
 
   discovery = new Discovery(device);
   discovery.on('change', pushState);
@@ -377,7 +379,7 @@ function start() {
     get rezume() { return rezume; }, loadReZume,
     get phone() { return phone; }, get phoneViews() { return phoneViews; }, get camShare() { return camShare; }, get vcam() { return vcam; }, get phoneRemote() { return phoneRemote; }, get nowPlaying() { return nowPlaying; }, get btAudio() { return btAudio; }, get phoneDrive() { return phoneDrive; }, get terminal() { return terminal; }, loadRemote, setCamera, loadNowPlaying, loadBtAudio, loadTerminal, connectPhoneDev, cancelPhoneInvite, hub: loadHub,
     get net() { return net; }, applyNet, joinHotspot,
-    checkFirewall, fixFirewall, setStartup, onApp: updateTray });
+    checkFirewall, fixFirewall, setStartup, onApp: () => { i18n.initFromSettings(settings); updateTray(); } });
   pairSync = new PairSync({ link, settings, save: saveSettings, set: ipc.set }); // Two-way switches per pair
   nativeTheme.on('updated', () => { checkTaskbar(); pushState(); });
   loadReZume(); // only while it's on

@@ -62,6 +62,7 @@ if (!app.requestSingleInstanceLock()) {
 const P = require('../shared/protocol.js');
 const CL = require('../shared/cursorlock.js');
 const trayMenu = require('../shared/traymenu.js');
+const i18n = require('../shared/i18n.js');
 const store = require('./store');
 const identity = require('./identity');
 const { Discovery, interfaces } = require('./discovery');
@@ -507,6 +508,7 @@ app.whenReady().then(() => {
   if (app.dock && !app.isPackaged) app.dock.setIcon(path.join(__dirname, '..', 'shared', 'icon', 'teindesk-dark-mac.png'));
   store.init(app.getPath('userData'));
   settings = store.loadSettings();
+  i18n.initFromSettings(settings);
   id = identity.load(settings);
   Object.assign(state, { macName: id.macName, macId: id.macId, fp: id.fp, version: app.getVersion(), about: aboutInfo(app) });
   console.log(`[main] ${id.macName} (${id.macId}) fp ${id.fp}`);

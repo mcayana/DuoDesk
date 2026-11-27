@@ -231,7 +231,7 @@ fun NavItem(icon: ImageVector, colors: List<Color>, label: String, selected: Boo
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tile(icon, colors, on = selected)
-        Text(label, color = if (selected) pal.text else pal.muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+        Text(I18n.t(label), color = if (selected) pal.text else pal.muted, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 10.dp).weight(1f))
         if (on) Dot(pal.good, 7)
     }
@@ -243,8 +243,8 @@ fun NavItem(icon: ImageVector, colors: List<Color>, label: String, selected: Boo
 fun PageHead(title: String, desc: String, master: Boolean? = null, onMaster: (Boolean) -> Unit = {}) {
     Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(bottom = 14.dp)) {
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 28.sp, fontWeight = FontWeight.Light, letterSpacing = (-0.8).sp, color = pal.text)
-            if (desc.isNotEmpty()) Text(desc, color = pal.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
+            Text(I18n.t(title), fontSize = 28.sp, fontWeight = FontWeight.Light, letterSpacing = (-0.8).sp, color = pal.text)
+            if (desc.isNotEmpty()) Text(I18n.t(desc), color = pal.muted, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
         }
         if (master != null) MacSwitch(master, onMaster)
     }
@@ -275,7 +275,7 @@ private val CardBrush = Brush.verticalGradient(listOf(Color(0x0BFFFFFF), Color(0
 fun MacCard(title: String = "", modifier: Modifier = Modifier, glow: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val s = RoundedCornerShape(22.dp)
     Column(modifier.padding(bottom = 16.dp)) {
-        if (title.isNotEmpty()) Text(title, fontFamily = GeistMono, fontSize = 11.5.sp, letterSpacing = 0.5.sp, color = pal.muted, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+        if (title.isNotEmpty()) Text(I18n.t(title), fontFamily = GeistMono, fontSize = 11.5.sp, letterSpacing = 0.5.sp, color = pal.muted, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
         Column(
             Modifier.fillMaxWidth().clip(s).background(CardBrush).let { if (glow) it.auroraGlow() else it }.border(BorderStroke(1.dp, pal.line), s),
             content = content,
@@ -292,8 +292,8 @@ fun MacRow(label: String, hint: String = "", first: Boolean = false, onClick: ((
         Layout(
             content = {
                 Column {
-                    Text(label, color = pal.text, fontSize = 15.sp)
-                    if (hint.isNotEmpty()) Text(hint, color = pal.muted, fontSize = 12.5.sp, modifier = Modifier.padding(top = 1.dp))
+                    Text(I18n.t(label), color = pal.text, fontSize = 15.sp)
+                    if (hint.isNotEmpty()) Text(I18n.t(hint), color = pal.muted, fontSize = 12.5.sp, modifier = Modifier.padding(top = 1.dp))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), content = controls)
             },
@@ -332,14 +332,14 @@ fun Note(text: String, kind: String = "info") {
     val c = when (kind) { "bad" -> pal.bad; "warn" -> pal.warn; else -> pal.accent }
     val bg = when (kind) { "bad" -> pal.bad.copy(alpha = 0.12f); "warn" -> pal.warn.copy(alpha = 0.12f); else -> pal.accentSoft }
     val s = RoundedCornerShape(16.dp)
-    Text(text, color = pal.text, fontSize = 13.5.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp).clip(s).background(bg)
+    Text(I18n.t(text), color = pal.text, fontSize = 13.5.sp, modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp).clip(s).background(bg)
         .border(1.dp, c.copy(alpha = 0.25f), s).padding(horizontal = 14.dp, vertical = 12.dp))
 }
 
 @Composable
 fun Pill(text: String, kind: String = "") {
     val c = when (kind) { "good" -> pal.good; "bad" -> pal.bad; "warn" -> pal.warn; "muted" -> pal.muted; else -> pal.accent }
-    Text(text, color = c, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.clip(CircleShape).background(c.copy(alpha = 0.14f)).padding(horizontal = 9.dp, vertical = 2.dp))
+    Text(I18n.t(text), color = c, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.clip(CircleShape).background(c.copy(alpha = 0.14f)).padding(horizontal = 9.dp, vertical = 2.dp))
 }
 
 // The main action: dark text on the spectrum, a full pill.
@@ -350,7 +350,7 @@ fun PrimaryButton(label: String, modifier: Modifier = Modifier, enabled: Boolean
         onClick = onClick, enabled = enabled, shape = CircleShape,
         modifier = modifier.heightIn(min = 48.dp).alpha(if (enabled) 1f else 0.4f).clip(CircleShape).background(SpecBrush),
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ink, disabledContainerColor = Color.Transparent, disabledContentColor = ink),
-    ) { Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+    ) { Text(I18n.t(label), fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis) }
 }
 
 // Everything else: a glass pill with a hairline; `color` tints the label (bad for hang up, say).
@@ -361,7 +361,7 @@ fun SecondaryButton(label: String, modifier: Modifier = Modifier, enabled: Boole
         onClick = onClick, modifier = modifier, enabled = enabled, shape = CircleShape,
         border = BorderStroke(1.dp, if (color == Color.Unspecified) pal.line2 else c.copy(alpha = 0.35f)),
         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0x12FFFFFF), contentColor = c, disabledContainerColor = Color(0x08FFFFFF), disabledContentColor = pal.faint),
-    ) { Text(label, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+    ) { Text(I18n.t(label), fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis) }
 }
 
 // A direction card's head: device glyph + name, the spectral link line, the other device.

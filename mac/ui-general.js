@@ -36,6 +36,17 @@ UI.tab({
     helperRow.querySelector('.controls').append(helperVal);
     const deviceName = el('span', { class: 'value' });
     const deviceRow = UI.row('Computer name', 'How other computers see this one', [deviceName]);
+
+    // Language (shared/i18n.js)
+    const langSel = UI.select([
+      { value: 'auto', label: 'Follow system' },
+      { value: 'ja', label: '日本語' },
+      { value: 'en', label: 'English' },
+    ], (v) => {
+      if (window.DuoDeskI18n) window.DuoDeskI18n.setLang(v);
+      api.setApp({ lang: v });
+    });
+    const langRow = UI.row('Display language', 'Follow system language or choose manually', [langSel.el]);
     const loginSw = UI.switch((v) => api.setApp({ openAtLogin: v }), { label: 'Open at login' });
     const awakeSw = UI.switch((v) => api.setApp({ keepAwake: v }), { label: 'Keep the display awake' });
     const hudSw = UI.switch((v) => api.setApp({ hud: v }), { label: 'Show a popup when switching' });
@@ -74,6 +85,7 @@ UI.tab({
       ]),
       UI.card('Appearance', [
         UI.row('Show a popup when switching', 'When the mouse and keyboard move between devices', [hudSw]),
+        langRow,
         wallRow,
         media.el,
       ]),
@@ -106,6 +118,10 @@ UI.tab({
         loginSw.set(s.app.openAtLogin);
         awakeSw.set(s.app.keepAwake);
         hudSw.set(s.app.hud !== false);
+        if (s.app.lang) {
+          langSel.set(s.app.lang);
+          if (window.DuoDeskI18n && window.DuoDeskI18n.getLang() !== s.app.lang) window.DuoDeskI18n.setLang(s.app.lang);
+        }
       }
       const w = s.wake || {};
       wakeSw.set(w.womp === true);

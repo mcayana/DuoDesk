@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sc_adb_short">ワイヤレスデバッグ</string>
+    <string name="sc_adb_long">ワイヤレスデバッグをオンにする</string>
+    <string name="sc_screen_short">パソコン画面</string>
+    <string name="sc_screen_long">パソコンの画面を表示</string>
+    <string name="input_service">DuoDesk：パソコンのマウスとキーボード</string>
+    <string name="input_service_desc">ワイヤレスデバッグが使えない環境（Bluetooth接続など）でも、ペアリング済みのパソコンからこのスマートフォンのタップ・スクロール・文字入力を行えるようにします。カーソル共有中に送信された操作のみを実行し、画面の読み取りは行いません。</string>
+</resources>

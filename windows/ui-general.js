@@ -51,6 +51,17 @@ UI.tab({
     const deviceName = el('span', { class: 'value' });
     const deviceRow = UI.row('Computer name', 'How other computers see this one', [deviceName]);
 
+    // Language (shared/i18n.js)
+    const langSel = UI.select([
+      { value: 'auto', label: 'Follow system' },
+      { value: 'ja', label: '日本語' },
+      { value: 'en', label: 'English' },
+    ], (v) => {
+      if (window.DuoDeskI18n) window.DuoDeskI18n.setLang(v);
+      api.setApp({ lang: v });
+    });
+    const langRow = UI.row('Display language', 'Follow system language or choose manually', [langSel.el]);
+
     // Appearance: the phone's wallpaper behind it here (settings.phone.wallpaper, was on the Phone page).
     const wallSw = UI.switch((v) => api.setPhone({ wallpaper: v }), { label: 'Show the phone’s wallpaper' });
     const wallRow = UI.row('Show the phone’s wallpaper', 'On its tile and Overview. DuoDesk on the phone reads it once wireless debugging is set up', [wallSw]);
@@ -71,6 +82,7 @@ UI.tab({
       ]),
       UI.card('Appearance', [
         UI.row('Show a popup when switching', 'When the mouse and keyboard move between devices', [hudSw]),
+        langRow,
         wallRow,
         media.el,
       ]),
@@ -87,6 +99,10 @@ UI.tab({
       for (const k of Object.keys(partSw)) partSw[k].set(ov[k] !== false);
       startup.set(s.startup);
       hudSw.set(s.app.hud);
+      if (s.app.lang) {
+        langSel.set(s.app.lang);
+        if (window.DuoDeskI18n && window.DuoDeskI18n.getLang() !== s.app.lang) window.DuoDeskI18n.setLang(s.app.lang);
+      }
       const f = s.files || {};
       recvReset.hidden = !f.receivedFolder;
       recvRow.setHint((f.receivedFolder && f.received !== f.receivedFolder ? f.receivedFolder + ' isn’t there now: Downloads meanwhile. ' : (f.received || 'Downloads') + ' · ')

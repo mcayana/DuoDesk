@@ -1,13 +1,16 @@
 @echo off
-rem DuoDesk Virtual Display Driver (IddCx UMDF 2.x — ARM64 & x64) build & Partner Center CAB script.
-rem Requires Visual Studio 2022 + Windows 11 WDK (Windows Driver Kit).
+rem DuoDesk Virtual Display Driver (IddCx UMDF 2.x - ARM64 / x64) build and Partner Center CAB script.
+rem Requires Visual Studio 2022 (or Build Tools) with C++ ARM64/x64 tools + Windows 11 WDK.
 rem Usage:
 rem   build.cmd [ARM64|x64|all] [--cab]
 setlocal enabledelayedexpansion
 set TARGET=%1
 if "%TARGET%"=="" set TARGET=all
 set MAKE_CAB=0
-if /i "%1"=="--cab" (set TARGET=all & set MAKE_CAB=1)
+if /i "%1"=="--cab" (
+  set TARGET=all
+  set MAKE_CAB=1
+)
 if /i "%2"=="--cab" set MAKE_CAB=1
 
 set VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
@@ -21,6 +24,17 @@ if not defined MSBUILD (
   exit /b 1
 )
 
+rem Detect latest installed WDK version containing um\iddcx
+set WDK_VER=
+for /d %%k in ("%ProgramFiles(x86)%\Windows Kits\10\Include\10.*") do (
+  if exist "%%k\um\iddcx" set WDK_VER=%%~nxk
+)
+if not defined WDK_VER (
+  echo Error: Windows Driver Kit ^(WDK^) with IddCx headers not found in Windows Kits\10\Include.
+  exit /b 1
+)
+echo Using WDK version: %WDK_VER%
+
 set SRC=%~dp0
 if /i "%TARGET%"=="all" (
   call :build_arch ARM64 || exit /b 1
@@ -32,14 +46,15 @@ exit /b 0
 
 :build_arch
 set ARCH=%1
-echo === Building DuoDeskVdd (%ARCH% Release) ===
-"%MSBUILD%" "%SRC%DuoDeskVdd.vcxproj" /p:Configuration=Release /p:Platform=%ARCH% /m /v:minimal || exit /b 1
+echo === Building DuoDeskVdd ^(%ARCH% Release^) ===
+"%MSBUILD%" "%SRC%DuoDeskVdd.vcxproj" /p:Configuration=Release /p:Platform=%ARCH% /p:WdkKitVer=%WDK_VER% /m /v:minimal || exit /b 1
 set OUT=%SRC%out\%ARCH%\Release\DuoDeskVdd
 if not exist "%OUT%" mkdir "%OUT%"
 copy /y "%SRC%out\%ARCH%\Release\DuoDeskVdd.dll" "%OUT%\DuoDeskVdd.dll" >nul
 copy /y "%SRC%DuoDeskVdd.inf" "%OUT%\DuoDeskVdd.inf" >nul
 
 rem Generate catalog (.cat) via Inf2Cat if WDK bin is installed
+set INF2CAT=
 for /d %%k in ("%ProgramFiles(x86)%\Windows Kits\10\bin\10.*") do (
   if exist "%%k\x86\inf2cat.exe" set INF2CAT=%%k\x86\inf2cat.exe
 )
@@ -54,7 +69,7 @@ if defined INF2CAT (
 )
 
 if "%MAKE_CAB%"=="1" (
-  echo === Creating Microsoft Partner Center submission CAB (%ARCH%) ===
+  echo === Creating Microsoft Partner Center submission CAB ^(%ARCH%^) ===
   set DDF=%SRC%out\%ARCH%\Release\submit.ddf
   (
     echo .OPTION EXPLICIT

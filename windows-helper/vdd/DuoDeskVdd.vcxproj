@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -20,27 +20,19 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7D249B7E-9A4B-4F3D-8C21-51E9D402AA64}</ProjectGuid>
-    <TemplateGuid>{32909489-7be5-497b-a20a-6554e98b9485}</TemplateGuid>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
     <Configuration>Release</Configuration>
     <Platform Condition="'$(Platform)' == ''">ARM64</Platform>
     <RootNamespace>DuoDeskVdd</RootNamespace>
-    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' == ''">10.0</WindowsTargetPlatformVersion>
+    <WdkKitRoot Condition="'$(WdkKitRoot)' == ''">C:\Program Files (x86)\Windows Kits\10\</WdkKitRoot>
+    <WdkKitVer Condition="'$(WdkKitVer)' == ''">10.0.28000.0</WdkKitVer>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
-    <TargetVersion>Windows10</TargetVersion>
+    <PlatformToolset>v143</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
     <UseDebugLibraries Condition="'$(Configuration)'=='Release'">false</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <DriverType>UMDF</DriverType>
-    <UMDF_VERSION_MAJOR>2</UMDF_VERSION_MAJOR>
-    <UMDF_VERSION_MINOR>15</UMDF_VERSION_MINOR>
-    <IDDCX_VERSION_MAJOR>1</IDDCX_VERSION_MAJOR>
-    <IDDCX_VERSION_MINOR>4</IDDCX_VERSION_MINOR>
-    <Driver_SpectreMitigation>Spectre</Driver_SpectreMitigation>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -48,18 +40,25 @@
     <OutDir>$(ProjectDir)out\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>DuoDeskVdd</TargetName>
+    <WdkArch Condition="'$(Platform)'=='ARM64'">arm64</WdkArch>
+    <WdkArch Condition="'$(Platform)'=='x64'">x64</WdkArch>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(IncludePath);$(WDKContentRoot)Include\$(TargetPlatformVersion)\um\iddcx\$(IDDCX_VERSION_MAJOR).$(IDDCX_VERSION_MINOR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>UNICODE;_UNICODE;UMDF_VERSION_MAJOR=2;UMDF_VERSION_MINOR=31;IDDCX_VERSION_MAJOR=1;IDDCX_VERSION_MINOR=4;WDF_USING_UMDF2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(WdkKitRoot)Include\wdf\umdf\2.31;$(WdkKitRoot)Include\$(WdkKitVer)\um\iddcx\1.4;$(WdkKitRoot)Include\$(WdkKitVer)\um;$(WdkKitRoot)Include\$(WdkKitVer)\shared;$(WdkKitRoot)Include\$(WdkKitVer)\km;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d3d11.lib;dxgi.lib;avrt.lib;ole32.lib;iddcxstub.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WDKContentRoot)Lib\$(TargetPlatformVersion)\um\$(Platform)\iddcx\$(IDDCX_VERSION_MAJOR).$(IDDCX_VERSION_MINOR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>WdfDriverStubUm.lib;iddcxstub.lib;ntdll.lib;d3d11.lib;dxgi.lib;avrt.lib;ole32.lib;onecoreuap.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WdkKitRoot)Lib\wdf\umdf\$(WdkArch)\2.31;$(WdkKitRoot)Lib\wdf\umdf\$(WdkArch);$(WdkKitRoot)Lib\$(WdkKitVer)\um\$(WdkArch)\iddcx\1.4;$(WdkKitRoot)Lib\$(WdkKitVer)\um\$(WdkArch);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>DuoDeskVdd.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -67,9 +66,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Driver.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Inf Include="DuoDeskVdd.inf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -322,8 +322,8 @@ NTSTATUS DuoDeskVddDeviceAdd(WDFDRIVER driver, PWDFDEVICE_INIT pDeviceInit)
     pnpPowerCallbacks.EvtDeviceD0Entry = DuoDeskVddDeviceD0Entry;
     WdfDeviceInitSetPnpPowerEventCallbacks(pDeviceInit, &pnpPowerCallbacks);
 
-    IDDCX_CLIENT_CONFIG iddConfig;
-    IDDCX_CLIENT_CONFIG_INIT(&iddConfig);
+    IDD_CX_CLIENT_CONFIG iddConfig;
+    IDD_CX_CLIENT_CONFIG_INIT(&iddConfig);
     iddConfig.EvtIddCxAdapterInitFinished = DuoDeskVddAdapterInitFinished;
     iddConfig.EvtIddCxParseMonitorDescription = DuoDeskVddParseMonitorDescription;
     iddConfig.EvtIddCxMonitorGetDefaultDescriptionModes = DuoDeskVddMonitorGetDefaultModes;
@@ -391,7 +391,7 @@ NTSTATUS DuoDeskVddParseMonitorDescription(const IDARG_IN_PARSEMONITORDESCRIPTIO
     }
     for (size_t i = 0; i < modes.size(); ++i)
     {
-        pInArgs->pMonitorModes[i] = CreateMonitorMode(modes[i].Width, modes[i].Height, modes[i].VSync, IDDCX_MONITOR_MODE_ORIGIN_MONITORDESCRIPTION);
+        pInArgs->pMonitorModes[i] = CreateMonitorMode(modes[i].Width, modes[i].Height, modes[i].VSync, IDDCX_MONITOR_MODE_ORIGIN_MONITORDESCRIPTOR);
     }
     pOutArgs->PreferredMonitorModeIdx = 0;
     return STATUS_SUCCESS;

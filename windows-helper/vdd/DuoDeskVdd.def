@@ -1,0 +1,3 @@
+LIBRARY DuoDeskVdd.dll
+EXPORTS
+    DriverEntry

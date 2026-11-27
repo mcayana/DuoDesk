@@ -49,7 +49,7 @@ UmdfHostProcessSharing   = ProcessSharingDisabled
 UmdfDispatcher           = FileHandle
 
 [DuoDeskVdd_Service_Install]
-UmdfLibraryVersion = 2.15.0
+UmdfLibraryVersion = 2.31.0
 ServiceBinary      = %12%\UMDF\DuoDeskVdd.dll
 UmdfExtensions     = IddCx0104
 
